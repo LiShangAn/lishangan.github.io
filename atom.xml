@@ -6,7 +6,7 @@
   <link href="http://example.com/atom.xml" rel="self"/>
   
   <link href="http://example.com/"/>
-  <updated>2021-12-20T14:00:26.481Z</updated>
+  <updated>2022-01-01T16:12:17.426Z</updated>
   <id>http://example.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>筆記 JWT 認證機制實現</title>
+    <link href="http://example.com/2022/01/01/jwt-auth/"/>
+    <id>http://example.com/2022/01/01/jwt-auth/</id>
+    <published>2022-01-01T12:00:00.000Z</published>
+    <updated>2022-01-01T16:12:17.426Z</updated>
+    
+    <content type="html"><![CDATA[<p><img src="images/jwt/jwt.jpg" alt="cover"></p><span id="more"></span><hr><h1 id="筆記-JWT-Auth-實現-NodeJS"><a href="#筆記-JWT-Auth-實現-NodeJS" class="headerlink" title="筆記: JWT Auth 實現 (NodeJS)"></a>筆記: JWT Auth 實現 (NodeJS)</h1><hr><h4 id="1-根據流程圖步驟編號，主要有以下-API-接口"><a href="#1-根據流程圖步驟編號，主要有以下-API-接口" class="headerlink" title="1. 根據流程圖步驟編號，主要有以下 API 接口:"></a>1. 根據流程圖步驟編號，主要有以下 API 接口:</h4><ol><li><p>[POST] /register: 註冊使用者帳號, 並將註冊資訊 (name, password) 寫入 mongodb</p></li><li><p>[POST] /auth: 相當於 Login 的行為, 當 Server 端接收到的登入資訊經 mongodb 比對後正確的話, 則產生對應之 JWT Token, 會產生 Access Token 回傳, 會產生 Refresh Token 放至 Cookie  </p></li><li><p>[GET] /users: Client再拿到 Access Token 後，之後便可利用該 Access Token 對 Server 進行資料存取, 不必再經過 db 驗證</p></li><li><p>[GET] /refresh: 假如 Accesss Token 到期, 此時 Server 會從 Request 中的 Cookie 中提取 Refresh Token, 並產生新的 Access Token 回傳</p></li></ol><pre><code class="javascript">// 代碼片段: server.js// 透過三個 handler 來實現上述提到的步驟 api interfaceconst authController = require(&#39;./controllers/authController&#39;);const registerController = require(&#39;./controllers/registerController&#39;);const refreshTokenController = require(&#39;./controllers/refreshTokenController&#39;);const verifyJWT = require(&#39;./middleware/verifyJWT&#39;);app.post(&#39;/register&#39;, registerController.handleNewUser);   // 用以註冊新使用者app.post(&#39;/auth&#39;, authController.handleLogin); // 用以登入驗證, 並回傳 tokenapp.get(&#39;/refresh&#39;, refreshTokenController.handleRefreshToken); // 用以透過 refresh token 產生新的 accsee tokenapp.use(verifyJWT); // 下面的 /users 操作都使用 middlerware 進行先行驗證 token 是否合法app.get(&#39;/users/&#39;, (req, res) =&gt; &#123;   // .... 拿取資料&#125;);</code></pre><h4 id="2-Mongodb-Schema-定義"><a href="#2-Mongodb-Schema-定義" class="headerlink" title="2. Mongodb Schema 定義"></a>2. Mongodb Schema 定義</h4><p>建立用來儲存使用者帳戶資訊的 mogodb schema, 分別存儲 name, password, description 以及 token</p><pre><code class="javascript">// 代碼: mudels/user.jsconst mongoose = require(&#39;mongoose&#39;);const bcrypt = require(&#39;bcryptjs&#39;);const userSchema = new mongoose.Schema(&#123;  name: &#123;    type: String,    required: true  &#125;,  password: &#123;    type: String,    required: true  &#125;,  description: &#123;    type: String  &#125;,  token: &#123;    type: String  &#125;&#125;);// 使用 mongoose 的 middleware, 在寫入資料庫時都會對 password 欄位再進行一次 hash 轉換userSchema.pre(&#39;save&#39;, async function (next) &#123;  const user = this;  if (user.isModified(&#39;password&#39;)) &#123;    user.password = await bcrypt.hash(user.password, 8);  &#125;  next();&#125;);module.exports = mongoose.model(&#39;User&#39;, userSchema);</code></pre><h4 id="3-handler-處理流程-註冊使用者"><a href="#3-handler-處理流程-註冊使用者" class="headerlink" title="3. handler 處理流程: 註冊使用者"></a>3. handler 處理流程: 註冊使用者</h4><p>註冊新使用者時, 將其名稱及密碼儲存至 mongodb, 如果已存在該使用者,則不予以註冊。 </p><pre><code class="javascript">// 代碼: controllers/registerController.jsrequire(&#39;dotenv&#39;).config();const User = require(&#39;../models/user&#39;);const handleNewUser = async (req, res) =&gt; &#123;  const &#123; name, password &#125; = req.body;  if (!name || !password) return res.sendStatus(400).json(&#123;&#39;message&#39;: &#39;Username and password are required.&#39;&#125;);  const duplicate = await User.findOne(&#123;name: name&#125;);  if (duplicate) return res.sendStatus(409); // Conflict  try &#123;    let user = new User();    user.name = name;    user.password = password;    await user.save();    res.status(201).json(&#123; &#39;success&#39;: `New user $&#123;user&#125; created!` &#125;);  &#125; catch (err) &#123;    res.status(500).json(&#123; &#39;message&#39;: err.message &#125;);  &#125;&#125;;module.exports = &#123; handleNewUser &#125;;</code></pre><h4 id="4-handler-處理流程-登入驗證及產生-JWT"><a href="#4-handler-處理流程-登入驗證及產生-JWT" class="headerlink" title="4. handler 處理流程: 登入驗證及產生 JWT"></a>4. handler 處理流程: 登入驗證及產生 JWT</h4><p> 將登入的名稱及密碼經過 mongodb 做比對, <code>如果吻合的話則開始產生對應的 Access Token 以及 Refresh Token, 分別放在 response body 以及 cookie 中</code>, 並且會將 refresh token 也一併存進 mongodb 該使用者的資料中。</p><p> 這邊的用意為，如果之後當 Client 要重新產生 Access Token 的時候，Server 這邊就可以:</p><ol><li><p>從該 Client Request Cookie 中提取 Refresh Token</p></li><li><p>找尋 mongodb 中擁有該 Refresh Token 的<code>用戶資訊</code>,如果沒找到, 則返回 403 錯誤</p></li><li><p>驗證其 Refresh Token, 並提取驗證後的解碼內容, 查看是否符合身分, 例如 decode 後的名稱是否跟上述的<code>用戶資訊</code>內容一致。</p></li><li><p>承上, 如果一致則重新產生 Access Token 並回傳</p><pre><code class="javascript">// 代碼: controllers/authController.jsconst jwt = require(&#39;jsonwebtoken&#39;);const bcrypt = require(&#39;bcryptjs&#39;);require(&#39;dotenv&#39;).config();const User = require(&#39;../models/user&#39;);const handleLogin = async (req, res) =&gt; &#123;const &#123; name, password &#125; = req.body;if (!name || !password) return res.sendStatus(400).json(&#123;&#39;message&#39;: &#39;Username and password are required.&#39;&#125;);const foundUser = await User.findOne(&#123;name: name&#125;);if (!foundUser) return res.sendStatus(401); // Unauthorizedconst match = await bcrypt.compare(password, foundUser.password);if (match) &#123;// create JWTsconst accessToken = jwt.sign(  &#123;    name: foundUser.name  &#125;,  process.env.ACCESS_TOKEN_SECRET,  &#123; expiresIn: &#39;10s&#39; &#125;);const refreshToken = jwt.sign(  &#123;    name: foundUser.name  &#125;,  process.env.REFRESH_TOKEN_SECRET,  &#123; expiresIn: &#39;1d&#39; &#125;);if (foundUser.tokens === undefined) &#123;  foundUser.tokens = [];&#125;// Saving refreshToken with current userfoundUser.token = refreshToken;await User.findOneAndUpdate(&#123;name: foundUser.name&#125;, foundUser);res.cookie(&#39;jwt&#39;, refreshToken);res.json(&#123; accessToken &#125;);&#125; else &#123;res.sendStatus(401);&#125;&#125;;module.exports = &#123; handleLogin &#125;;</code></pre></li></ol><h4 id="5-handler-處理流程-Refresh-Access-Token"><a href="#5-handler-處理流程-Refresh-Access-Token" class="headerlink" title="5. handler 處理流程: Refresh Access Token"></a>5. handler 處理流程: Refresh Access Token</h4><p>提取 Refresh Token, 驗證其有效性, 並重新產生 Access Token 回傳</p><pre><code class="javascript"> // 代碼: controllers/refreshTokenController.jsconst jwt = require(&#39;jsonwebtoken&#39;);require(&#39;dotenv&#39;).config();const User = require(&#39;../models/user&#39;);const handleRefreshToken = async (req, res) =&gt; &#123;  const cookies = req.cookies;  if (!cookies) return res.sendStatus(401);  const refreshToken = cookies.jwt;  const foundUser = await User.findOne(&#123;tokens: refreshToken&#125;);  if (!foundUser) return res.sendStatus(403); // Forbidden  // evaluate jwt  jwt.verify(    refreshToken,    process.env.REFRESH_TOKEN_SECRET,    (err, decoded) =&gt; &#123;      if (err || foundUser.name !== decoded.name) return res.sendStatus(403);      console.log(&#39;decoded.name: &#39; + decoded.name);      const accessToken = jwt.sign(        &#123; name: decoded.name &#125;,        process.env.ACCESS_TOKEN_SECRET,        &#123; expiresIn: &#39;10s&#39; &#125;      );      res.json(&#123; accessToken &#125;);    &#125;  );&#125;;module.exports = &#123; handleRefreshToken &#125;;</code></pre>]]></content>
+    
+    
+    <summary type="html">&lt;p&gt;&lt;img src=&quot;images/jwt/jwt.jpg&quot; alt=&quot;cover&quot;&gt;&lt;/p&gt;</summary>
+    
+    
+    
+    <category term="notes" scheme="http://example.com/categories/notes/"/>
+    
+    
+    <category term="hobby" scheme="http://example.com/tags/hobby/"/>
+    
+    <category term="coding" scheme="http://example.com/tags/coding/"/>
+    
+    <category term="tutorial" scheme="http://example.com/tags/tutorial/"/>
+    
+  </entry>
   
   <entry>
     <title>測試</title>
@@ -34,7 +59,7 @@
     <link href="http://example.com/2021/11/22/hexo-theme-cutie-v2-tutorial/"/>
     <id>http://example.com/2021/11/22/hexo-theme-cutie-v2-tutorial/</id>
     <published>2021-11-21T16:00:00.000Z</published>
-    <updated>2021-12-20T14:00:33.636Z</updated>
+    <updated>2022-01-01T12:18:16.612Z</updated>
     
     <content type="html"><![CDATA[<p><img src="images/tree.png" alt="cover"></p><p>從前從前.</p><span id="more"></span><h1 id="魯拉拉"><a href="#魯拉拉" class="headerlink" title="魯拉拉"></a>魯拉拉</h1><h2 id="魯拉拉-1"><a href="#魯拉拉-1" class="headerlink" title="魯拉拉"></a>魯拉拉</h2>]]></content>
     
