@@ -12,7 +12,7 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
 <!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
-</head><body class="is-flex is-flex-direction-column"><header class="header-widget is-flex-shrink-0 is-hidden-mobile"><div class="container is-fullhd is-flex is-justify-content-space-between is-align-items-center is-full-height"><section class="is-hidden-mobile is-flex-shrink-0"><h2><a href="/">LiShangAn's blog</a></h2></section><h3 class="is-hidden-mobile is-family-serif is-full-height is-flex is-align-items-center is-flex-shrink-0"><div class="is-full-height" id="postTopic"><p class="is-full-height is-flex-shrink-0 is-flex is-align-items-center is-justify-content-center">[筆記] JWT Auth 實現</p><p class="is-full-height is-flex-shrink-0 is-flex is-align-items-center is-justify-content-center">Click back to the top</p></div></h3><aside class="is-flex-shrink-0"><h3 class="is-inline-block"><a href="/">Home</a></h3><h3 class="is-inline-block"><a href="/about">About</a></h3><h3 class="is-inline-block"><a href="/archives">Archives</a></h3></aside></div></header><header class="is-flex header-widget is-flex-shrink-0 is-align-items-center is-justify-content-center is-hidden-tablet"><h3 class="is-inline-block"><a href="/">Home</a></h3><h3 class="is-inline-block"><a href="/about">About</a></h3><h3 class="is-inline-block"><a href="/archives">Archives</a></h3></header><main><main class="container is-max-widescreen content section post-page pt-4 px-4"><div class="columns is-flex-desktop is-justify-content-center is-flex-direction-row-reverse"><div class="column is-3 is-hidden-mobile"><ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E6%A0%B9%E6%93%9A%E6%B5%81%E7%A8%8B%E5%9C%96%E6%AD%A5%E9%A9%9F%E7%B7%A8%E8%99%9F%EF%BC%8C%E4%B8%BB%E8%A6%81%E6%9C%89%E4%BB%A5%E4%B8%8B-API-%E6%8E%A5%E5%8F%A3"><span class="toc-text">1. 根據流程圖步驟編號，主要有以下 API 接口:</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-Mongodb-Schema-%E5%AE%9A%E7%BE%A9"><span class="toc-text">2. Mongodb Schema 定義</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-handler-%E8%99%95%E7%90%86%E6%B5%81%E7%A8%8B-%E8%A8%BB%E5%86%8A%E4%BD%BF%E7%94%A8%E8%80%85"><span class="toc-text">3. handler 處理流程: 註冊使用者</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-handler-%E8%99%95%E7%90%86%E6%B5%81%E7%A8%8B-%E7%99%BB%E5%85%A5%E9%A9%97%E8%AD%89%E5%8F%8A%E7%94%A2%E7%94%9F-JWT"><span class="toc-text">4. handler 處理流程: 登入驗證及產生 JWT</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-handler-%E8%99%95%E7%90%86%E6%B5%81%E7%A8%8B-Refresh-Access-Token"><span class="toc-text">5. handler 處理流程: Refresh Access Token</span></a></li></ol></div><div class="column is-9"><header class="my-4"><a href="/tags/coding"><i class="tag post-item-tag">coding</i></a></header><h1 class="mt-0 mb-1 is-family-serif" id="postTitle">[筆記] JWT Auth 實現</h1><time class="has-text-grey" datetime="2022-01-01T12:00:00.000Z">2022-01-01</time><article class="mt-2 post-content"><p><img src="https://raw.githubusercontent.com/LiShangAn/lishangan.github.io/master/images/jwt/jwt.jpg" alt="cover"></p>
+</head><body class="is-flex is-flex-direction-column"><header class="header-widget is-flex-shrink-0 is-hidden-mobile"><div class="container is-fullhd is-flex is-justify-content-space-between is-align-items-center is-full-height"><section class="is-hidden-mobile is-flex-shrink-0"><h2><a href="/">LiShangAn's blog</a></h2></section><h3 class="is-hidden-mobile is-family-serif is-full-height is-flex is-align-items-center is-flex-shrink-0"><div class="is-full-height" id="postTopic"><p class="is-full-height is-flex-shrink-0 is-flex is-align-items-center is-justify-content-center">[筆記] JWT Auth 實現</p><p class="is-full-height is-flex-shrink-0 is-flex is-align-items-center is-justify-content-center">Click back to the top</p></div></h3><aside class="is-flex-shrink-0"><h3 class="is-inline-block"><a href="/">Home</a></h3><h3 class="is-inline-block"><a href="/about">About</a></h3><h3 class="is-inline-block"><a href="/archives">Archives</a></h3></aside></div></header><header class="is-flex header-widget is-flex-shrink-0 is-align-items-center is-justify-content-center is-hidden-tablet"><h3 class="is-inline-block"><a href="/">Home</a></h3><h3 class="is-inline-block"><a href="/about">About</a></h3><h3 class="is-inline-block"><a href="/archives">Archives</a></h3></header><main><main class="container is-max-widescreen content section post-page pt-4 px-4"><div class="columns is-flex-desktop is-justify-content-center is-flex-direction-row-reverse"><div class="column is-3 is-hidden-mobile"><ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E6%A0%B9%E6%93%9A%E6%B5%81%E7%A8%8B%E5%9C%96%E6%AD%A5%E9%A9%9F%E7%B7%A8%E8%99%9F%EF%BC%8C%E4%B8%BB%E8%A6%81%E6%9C%89%E4%BB%A5%E4%B8%8B-API-%E6%8E%A5%E5%8F%A3"><span class="toc-text">1. 根據流程圖步驟編號，主要有以下 API 接口:</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-Mongodb-Schema-%E5%AE%9A%E7%BE%A9"><span class="toc-text">2. Mongodb Schema 定義</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-handler-%E8%99%95%E7%90%86%E6%B5%81%E7%A8%8B-%E8%A8%BB%E5%86%8A%E4%BD%BF%E7%94%A8%E8%80%85"><span class="toc-text">3. handler 處理流程: 註冊使用者</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-handler-%E8%99%95%E7%90%86%E6%B5%81%E7%A8%8B-%E7%99%BB%E5%85%A5%E9%A9%97%E8%AD%89%E5%8F%8A%E7%94%A2%E7%94%9F-JWT"><span class="toc-text">4. handler 處理流程: 登入驗證及產生 JWT</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-handler-%E8%99%95%E7%90%86%E6%B5%81%E7%A8%8B-Refresh-Access-Token"><span class="toc-text">5. handler 處理流程: Refresh Access Token</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-Verify-JWT-Middleware"><span class="toc-text">6. Verify JWT Middleware</span></a></li></ol></div><div class="column is-9"><header class="my-4"><a href="/tags/coding"><i class="tag post-item-tag">coding</i></a></header><h1 class="mt-0 mb-1 is-family-serif" id="postTitle">[筆記] JWT Auth 實現</h1><time class="has-text-grey" datetime="2022-01-01T12:00:00.000Z">2022-01-01</time><article class="mt-2 post-content"><p><img src="https://raw.githubusercontent.com/LiShangAn/lishangan.github.io/master/images/jwt/jwt.jpg" alt="cover"></p>
 <h4 id="1-根據流程圖步驟編號，主要有以下-API-接口"><a href="#1-根據流程圖步驟編號，主要有以下-API-接口" class="headerlink" title="1. 根據流程圖步驟編號，主要有以下 API 接口:"></a>1. 根據流程圖步驟編號，主要有以下 API 接口:</h4><ol>
 <li><p>[POST] /register: 註冊使用者帳號, 並將註冊資訊 (name, password) 寫入 mongodb</p>
 </li>
@@ -42,6 +42,7 @@ app.get(&#39;/users/&#39;, (req, res) =&gt; &#123;
 <pre><code class="javascript">// 代碼: mudels/user.js
 const mongoose = require(&#39;mongoose&#39;);
 const bcrypt = require(&#39;bcryptjs&#39;);
+
 const userSchema = new mongoose.Schema(&#123;
   name: &#123;
     type: String,
@@ -93,66 +94,71 @@ module.exports = &#123; handleNewUser &#125;;
 <h4 id="4-handler-處理流程-登入驗證及產生-JWT"><a href="#4-handler-處理流程-登入驗證及產生-JWT" class="headerlink" title="4. handler 處理流程: 登入驗證及產生 JWT"></a>4. handler 處理流程: 登入驗證及產生 JWT</h4><p> 將登入的名稱及密碼經過 mongodb 做比對, <code>如果吻合的話則開始產生對應的 Access Token 以及 Refresh Token, 分別放在 response body 以及 cookie 中</code>, 並且會將 refresh token 也一併存進 mongodb 該使用者的資料中。</p>
 <p> 這邊的用意為，如果之後當 Client 要重新產生 Access Token 的時候，Server 這邊就可以:</p>
 <ol>
-<li><p>從該 Client Request Cookie 中提取 Refresh Token</p>
-</li>
-<li><p>找尋 mongodb 中擁有該 Refresh Token 的<code>用戶資訊</code>,如果沒找到, 則返回 403 錯誤</p>
-</li>
-<li><p>驗證其 Refresh Token, 並提取驗證後的解碼內容, 查看是否符合身分, 例如 decode 後的名稱是否跟上述的<code>用戶資訊</code>內容一致。</p>
-</li>
-<li><p>承上, 如果一致則重新產生 Access Token 並回傳</p>
+<li>從該 Client Request Cookie 中提取 Refresh Token</li>
+<li>找尋 mongodb 中擁有該 Refresh Token 的<code>用戶資訊</code>,如果沒找到, 則返回 403 錯誤</li>
+<li>驗證其 Refresh Token, 並提取驗證後的解碼內容, 查看是否符合身分, 例如 decode 後的名稱是否跟上述的<code>用戶資訊</code>內容一致。</li>
+<li>承上, 如果一致則重新產生 Access Token 並回傳</li>
+</ol>
 <pre><code class="javascript">// 代碼: controllers/authController.js
 const jwt = require(&#39;jsonwebtoken&#39;);
 const bcrypt = require(&#39;bcryptjs&#39;);
 require(&#39;dotenv&#39;).config();
 const User = require(&#39;../models/user&#39;);
-const handleLogin = async (req, res) =&gt; &#123;
-const &#123; name, password &#125; = req.body;
-if (!name || !password) return res.sendStatus(400).json(&#123;&#39;message&#39;: &#39;Username and password are required.&#39;&#125;);
-const foundUser = await User.findOne(&#123;name: name&#125;);
-if (!foundUser) return res.sendStatus(401); // Unauthorized
-const match = await bcrypt.compare(password, foundUser.password);
-if (match) &#123;
-// create JWTs
-const accessToken = jwt.sign(
-  &#123;
-    name: foundUser.name
-  &#125;,
-  process.env.ACCESS_TOKEN_SECRET,
-  &#123; expiresIn: &#39;10s&#39; &#125;);
-const refreshToken = jwt.sign(
-  &#123;
-    name: foundUser.name
-  &#125;,
-  process.env.REFRESH_TOKEN_SECRET,
-  &#123; expiresIn: &#39;1d&#39; &#125;);
-if (foundUser.tokens === undefined) &#123;
-  foundUser.tokens = [];
-&#125;
 
-// Saving refreshToken with current user
-foundUser.token = refreshToken;
-await User.findOneAndUpdate(&#123;name: foundUser.name&#125;, foundUser);
-res.cookie(&#39;jwt&#39;, refreshToken);
-res.json(&#123; accessToken &#125;);
-&#125; else &#123;
-res.sendStatus(401);
-&#125;
+const handleLogin = async (req, res) =&gt; &#123;
+  const &#123; name, password &#125; = req.body;
+  if (!name || !password) return res.sendStatus(400).json(&#123;&#39;message&#39;: &#39;Username and password are required.&#39;&#125;);
+  
+  const foundUser = await User.findOne(&#123;name: name&#125;);
+  if (!foundUser) return res.sendStatus(401); // Unauthorized
+
+  const match = await bcrypt.compare(password, foundUser.password);
+  if (match) &#123;
+    // create JWTs
+    const accessToken = jwt.sign(
+      &#123;
+        name: foundUser.name
+      &#125;,
+      process.env.ACCESS_TOKEN_SECRET,
+      &#123; expiresIn: &#39;10s&#39; &#125;);
+    const refreshToken = jwt.sign(
+      &#123;
+        name: foundUser.name
+      &#125;,
+      process.env.REFRESH_TOKEN_SECRET,
+      &#123; expiresIn: &#39;1d&#39; &#125;);
+    if (foundUser.tokens === undefined) &#123;
+      foundUser.tokens = [];
+    &#125;
+
+    // Saving refreshToken with current user
+    foundUser.token = refreshToken;
+
+    await User.findOneAndUpdate(&#123;name: foundUser.name&#125;, foundUser);
+    res.cookie(&#39;jwt&#39;, refreshToken);
+    res.json(&#123; accessToken &#125;);
+
+  &#125; else &#123;
+    res.sendStatus(401);
+  &#125;
 &#125;;
 module.exports = &#123; handleLogin &#125;;
 </code></pre>
-</li>
-</ol>
 <h4 id="5-handler-處理流程-Refresh-Access-Token"><a href="#5-handler-處理流程-Refresh-Access-Token" class="headerlink" title="5. handler 處理流程: Refresh Access Token"></a>5. handler 處理流程: Refresh Access Token</h4><p>提取 Refresh Token, 驗證其有效性, 並重新產生 Access Token 回傳</p>
 <pre><code class="javascript"> // 代碼: controllers/refreshTokenController.js
 const jwt = require(&#39;jsonwebtoken&#39;);
 require(&#39;dotenv&#39;).config();
 const User = require(&#39;../models/user&#39;);
+
 const handleRefreshToken = async (req, res) =&gt; &#123;
   const cookies = req.cookies;
   if (!cookies) return res.sendStatus(401);
+
   const refreshToken = cookies.jwt;
+
   const foundUser = await User.findOne(&#123;tokens: refreshToken&#125;);
   if (!foundUser) return res.sendStatus(403); // Forbidden
+
   // evaluate jwt
   jwt.verify(
     refreshToken,
@@ -170,5 +176,29 @@ const handleRefreshToken = async (req, res) =&gt; &#123;
   );
 &#125;;
 module.exports = &#123; handleRefreshToken &#125;;
+</code></pre>
+<h4 id="6-Verify-JWT-Middleware"><a href="#6-Verify-JWT-Middleware" class="headerlink" title="6. Verify JWT Middleware"></a>6. Verify JWT Middleware</h4><p>使用中間層來達到當 Client 欲操作 Server GET /users api 的時後, 都會先驗證其 Access Token</p>
+<pre><code class="javascript">// 代碼: middleware/verifyJWT.js
+const jwt = require(&#39;jsonwebtoken&#39;);
+require(&#39;dotenv&#39;).config();
+
+const verifyJWT = (req, res, next) =&gt; &#123;
+  console.log(&#39;enter verifyJWT middleware&#39;);
+  const authHeader = req.headers[&#39;authorization&#39;];
+  if (!authHeader) &#123;
+    return res.sendStatus(401);
+  &#125;
+  const token = authHeader.split(&#39; &#39;)[1]; // Bearer token
+  jwt.verify(
+    token,
+    process.env.ACCESS_TOKEN_SECRET,
+    (err, decode) =&gt; &#123;
+      if (err) return res.sendStatus(403); // invalid token
+      res.name = decode.name;
+      next();
+    &#125;
+  );
+&#125;;
+module.exports = verifyJWT;
 </code></pre>
 </article><section class="jump-container is-flex is-justify-content-space-between my-6"><!-- em is empty placeholder--><em></em><a class="button is-default" href="/2021/12/20/hello-world/" title="測試"><span class="has-text-weight-semibold">Next: 測試</span><i class="iconfont icon-next ml-2 has-text-grey"></i></a></section><article class="mt-6 comment-container"><script async repo="LiShangAn/blog" src="https://utteranc.es/client.js" issue-term="pathname" theme="preferred-color-scheme"></script></article></div></div></main></main><footer class="is-flex is-flex-direction-column is-align-items-center is-flex-shrink-0 is-family-serif"><section class="sns-container"><a title="twitter" target="_blank" rel="noopener nofollow" href="//twitter.com//"><i class="iconfont icon-twitter"></i></a><!-- Github--><a title="github" target="_blank" rel="noopener nofollow" href="//github.com/lishangan"><i class="iconfont icon-github"></i></a><!-- Ins--><a title="instagram" target="_blank" rel="noopener nofollow" href="//www.instagram.com//"><i class="iconfont icon-ins"></i></a><!-- RSS--><!-- 知乎--><!-- 领英--><!-- 脸书--><a title="facebook" target="_blank" rel="noopener nofollow" href="//www.facebook.com/an.li.18"><i class="iconfont icon-tian7_facebook"></i></a></section><p><span>Copyright ©</span><span> LiShangAn 2022</span></p><div class="is-flex is-justify-content-center is-flex-wrap-wrap"><p>Powered by Hexo &verbar;&nbsp;</p><p class="is-flex is-justify-content-center"><a title="Hexo theme author" target="_blank" rel="noopener" href="//github.com/haojen">Theme by Haojen&nbsp;</a></p><div style="margin-top: 2px"><a class="github-button" title="github-button" target="_blank" rel="noopener" href="https://github.com/haojen/hexo-theme-Claudia" data-color-scheme="no-preference: light; light: light; dark: dark;" data-show-count="true"></a></div></div><div><span></span></div></footer><script async defer src="https://buttons.github.io/buttons.js"></script><script src="/js/post.js"></script></body></html>
