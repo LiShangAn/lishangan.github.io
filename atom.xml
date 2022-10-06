@@ -6,7 +6,7 @@
   <link href="http://example.com/atom.xml" rel="self"/>
   
   <link href="http://example.com/"/>
-  <updated>2022-01-01T12:18:16.612Z</updated>
+  <updated>2022-10-06T10:12:38.115Z</updated>
   <id>http://example.com/</id>
   
   <author>
@@ -21,12 +21,12 @@
     <link href="http://example.com/2021/11/22/hexo-theme-cutie-v2-tutorial/"/>
     <id>http://example.com/2021/11/22/hexo-theme-cutie-v2-tutorial/</id>
     <published>2021-11-21T16:00:00.000Z</published>
-    <updated>2022-01-01T12:18:16.612Z</updated>
+    <updated>2022-10-06T10:12:38.115Z</updated>
     
-    <content type="html"><![CDATA[<p><img src="images/tree.png" alt="cover"></p><p>從前從前.</p><span id="more"></span><h1 id="魯拉拉"><a href="#魯拉拉" class="headerlink" title="魯拉拉"></a>魯拉拉</h1><h2 id="魯拉拉-1"><a href="#魯拉拉-1" class="headerlink" title="魯拉拉"></a>魯拉拉</h2>]]></content>
+    <content type="html"><![CDATA[<p><img src="https://raw.githubusercontent.com/LiShangAn/lishangan.github.io/master/images/tree.png" alt="cover"></p><p>從前從前.</p><span id="more"></span><h1 id="魯拉拉"><a href="#魯拉拉" class="headerlink" title="魯拉拉"></a>魯拉拉</h1><h2 id="魯拉拉-1"><a href="#魯拉拉-1" class="headerlink" title="魯拉拉"></a>魯拉拉</h2>]]></content>
     
     
-    <summary type="html">&lt;p&gt;&lt;img src=&quot;images/tree.png&quot; alt=&quot;cover&quot;&gt;&lt;/p&gt;
+    <summary type="html">&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/LiShangAn/lishangan.github.io/master/images/tree.png&quot; alt=&quot;cover&quot;&gt;&lt;/p&gt;
 &lt;p&gt;從前從前.&lt;/p&gt;</summary>
     
     
@@ -47,14 +47,14 @@
     <link href="http://example.com/2021/11/20/Typography%20and%20tags/"/>
     <id>http://example.com/2021/11/20/Typography%20and%20tags/</id>
     <published>2021-11-20T05:51:07.000Z</published>
-    <updated>2021-12-06T14:52:20.814Z</updated>
+    <updated>2022-10-06T10:12:42.995Z</updated>
     
-    <content type="html"><![CDATA[<p><img src="images/lake.png" alt="$cover"></p>]]></content>
+    <content type="html"><![CDATA[<p><img src="https://raw.githubusercontent.com/LiShangAn/lishangan.github.io/master/images/lake.png" alt="cover"></p>]]></content>
     
     
       
       
-    <summary type="html">&lt;p&gt;&lt;img src=&quot;images/lake.png&quot; alt=&quot;$cover&quot;&gt;&lt;/p&gt;
+    <summary type="html">&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/LiShangAn/lishangan.github.io/master/images/lake.png&quot; alt=&quot;cover&quot;&gt;&lt;/p&gt;
 </summary>
       
     
